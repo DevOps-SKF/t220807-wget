@@ -1,0 +1,13 @@
+FROM ubuntu:20.04 as prep
+RUN apt-get update && apt-get install -y wget
+WORKDIR /tmp/lib
+RUN for l in $(ldd /usr/bin/wget | grep "gnu" | cut -f 2 | cut -d ' ' -f1) ; do cp /lib/x86_64-linux-gnu/$l /tmp/lib ; done
+
+FROM scratch
+COPY --from=prep /usr/bin/sh /usr/bin/wget /bin/
+COPY --from=prep /lib64/ld-linux-x86-64.so.2 /lib64/
+COPY --from=prep /tmp/lib/* /lib/x86_64-linux-gnu/
+
+WORKDIR /data
+# ENTRYPOINT ["sh", "-c", "/bin/wget ${0}/favicon.ico"]
+CMD [ "/bin/sh" ]
